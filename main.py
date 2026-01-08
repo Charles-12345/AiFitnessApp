@@ -103,41 +103,30 @@ Provide:
 2. Daily diet plan with meals and portions
 3. Tips for motivation and progress"""
 
-    api_url = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-1.5B-Instruct"
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
+    api_url = "https://router.huggingface.co/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
     payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 1500,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "return_full_text": False
-        }
+        "model": "Qwen/Qwen2.5-1.5B-Instruct:hf-inference",
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 1500,
+        "temperature": 0.7,
+        "top_p": 0.9,
     }
 
     try:
-        response = requests.post(api_url, headers=headers, json=payload, timeout=30)
-
-        if response.status_code == 200:
-            result = response.json()
-            if isinstance(result, list) and len(result) > 0:
-                return result[0].get("generated_text", "")
-            if isinstance(result, dict):
-                return result.get("generated_text", "")
-            return ""
+        r = requests.post(api_url, headers=headers, json=payload, timeout=60)
+        if r.status_code == 200:
+            data = r.json()
+            return data["choices"][0]["message"]["content"]
         else:
-            st.error(f"API Error: {response.status_code} - {response.text}")
+            st.error(f"API Error: {r.status_code} - {r.text}")
             return None
-
     except Exception as e:
-        st.error(f"Error: {str(e)}")
+        st.error(f"Error: {e}")
         return None
-
 
 # Form
 st.markdown("## 📝 Your Personal Information")
